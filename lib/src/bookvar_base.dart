@@ -3,6 +3,9 @@ import 'dart:typed_data';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html;
 
+typedef Chapter = List<Element>;
+typedef Book = List<Chapter>;
+
 abstract class Element {}
 
 abstract class TextElement extends Element {
