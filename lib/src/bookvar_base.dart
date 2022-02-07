@@ -12,34 +12,53 @@ abstract class Element {
   Element({required this.reference});
 }
 
+class TextOffset {
+  final int start;
+  final int close;
+
+  const TextOffset({required this.start, required this.close});
+}
+
 abstract class TextElement extends Element {
   final String content;
+  final TextOffset? _offset;
 
-  TextElement({required this.content, required int reference}) : super(reference: reference);
+  TextElement({
+    required this.content,
+    required int reference,
+    TextOffset? offset,
+  })  : _offset = offset,
+        super(reference: reference);
+
+  TextOffset get offset =>
+      _offset ?? TextOffset(start: 0, close: content.length);
 }
 
 abstract class BlockElement extends Element {
   final double aspectRatio;
 
-  BlockElement({required this.aspectRatio, required int reference}) : super(reference: reference);
+  BlockElement({required this.aspectRatio, required int reference})
+      : super(reference: reference);
 }
 
 class Header extends TextElement {
-  Header(String content, {required int reference}) : super(content: content, reference: reference);
+  Header(String content, {required int reference, TextOffset? offset})
+      : super(content: content, reference: reference, offset: offset);
 }
 
 class Paragraph extends TextElement {
-  Paragraph(String content, {required int reference}) : super(content: content, reference: reference);
+  Paragraph(String content, {required int reference, TextOffset? offset})
+      : super(content: content, reference: reference, offset: offset);
 }
 
 abstract class Image extends BlockElement {
   final List<int> buffer;
 
-  Image({
-    required this.buffer,
-    required double aspectRatio,
-    required int reference
-  }) : super(aspectRatio: aspectRatio, reference: reference);
+  Image(
+      {required this.buffer,
+      required double aspectRatio,
+      required int reference})
+      : super(aspectRatio: aspectRatio, reference: reference);
 
   factory Image.from(List<int> buffer, {required int reference}) {
     if (PngImage._hasPngSignature(buffer)) {
@@ -50,12 +69,16 @@ abstract class Image extends BlockElement {
 }
 
 class UniversalImage extends Image {
-  UniversalImage(List<int> buffer, {required int reference}) : super(buffer: buffer, aspectRatio: 1, reference: reference);
+  UniversalImage(List<int> buffer, {required int reference})
+      : super(buffer: buffer, aspectRatio: 1, reference: reference);
 }
 
 class PngImage extends Image {
   PngImage(List<int> buffer, {required int reference})
-      : super(buffer: buffer, aspectRatio: _calculateAspectRatio(buffer), reference: reference);
+      : super(
+            buffer: buffer,
+            aspectRatio: _calculateAspectRatio(buffer),
+            reference: reference);
 
   static const int widthBytesOffset = 16;
   static const int heightBytesOffset = 20;
@@ -98,7 +121,7 @@ List<Element> parse(String content, List<ImageRecord> images) {
       }
 
       final record =
-      images.firstWhere((element) => source.contains(element.filename));
+          images.firstWhere((element) => source.contains(element.filename));
 
       elements.add(Image.from(record.buffer, reference: index++));
     }
